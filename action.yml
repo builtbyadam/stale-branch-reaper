@@ -1,0 +1,57 @@
+name: "stale-branch-reaper"
+description: "List (and optionally delete) merged branches older than N days via the REST API, with a safe dry-run default."
+author: "amoussa1229"
+branding:
+  icon: "scissors"
+  color: "red"
+
+inputs:
+  older-than-days:
+    description: >-
+      Only consider branches whose last commit is older than this many days.
+      Aged from the last commit's committer date. Non-negative integer.
+    required: false
+    default: "90"
+  merged-only:
+    description: >-
+      When "true" (default), only branches already merged into the default
+      branch are eligible for deletion; unmerged branches are reported as
+      skipped-unmerged. Set to "false" to reap stale branches regardless of
+      merge status. ("true"/"false")
+    required: false
+    default: "true"
+  protect-patterns:
+    description: >-
+      Newline- or comma-separated globs of branch names to never delete.
+      Supports *, ?, and **. The default branch and API-protected branches are
+      always excluded in addition to these patterns.
+    required: false
+    default: |
+      main
+      master
+      release/**
+  confirm:
+    description: >-
+      Set to "true" to actually delete. Defaults to "false" (dry-run): the
+      action only reports what it would delete and performs zero deletions.
+    required: false
+    default: "false"
+  github-token:
+    description: >-
+      Token used to list and delete branches. Needs contents:write to delete
+      refs.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  deleted-count:
+    description: "Number of branches actually deleted (0 in dry-run)."
+  report:
+    description: >-
+      JSON array of {branch, last_commit_date, merged, action} where action is
+      "would-delete", "deleted", "skipped-protected", "skipped-recent", or
+      "skipped-unmerged".
+
+runs:
+  using: "node24"
+  main: "dist/index.js"
